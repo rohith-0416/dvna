@@ -13,7 +13,7 @@ require('./core/passport')(passport)
 app.use(express.static('public'))
 app.set('view engine','ejs')
 app.use(morgan('tiny'))
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(express.json()); // Replaced bodyParser with express.json()
 app.use(fileUpload());
 
 // Enable for Reverse proxy support
@@ -24,7 +24,7 @@ app.use(session({
   secret: 'keyboard cat',
   resave: true,
   saveUninitialized: true,
-  cookie: { secure: true }
+  cookie: { secure: false }
 }))
 
 // Initialize Passport
