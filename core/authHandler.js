@@ -17,7 +17,7 @@ module.exports.isNotAuthenticated = function (req, res, next) {
 }
 
 module.exports.forgotPw = function (req, res) {
-	if (req.body.login && /^[a-zA-Z0-9]+$/.test(req.body.login)) {
+	if (req.body.login) {
 		db.User.find({
 			where: {
 				'login': req.body.login
@@ -39,22 +39,18 @@ module.exports.forgotPw = function (req, res) {
 }
 
 module.exports.resetPw = function (req, res) {
-	if (req.query.login && /^[a-zA-Z0-9]+$/.test(req.query.login)) {
+	if (req.query.login) {
 		db.User.find({
 			where: {
 				'login': req.query.login
 			}
 		}).then(user => {
 			if (user) {
-				if (req.query.token == md5(req.query.login)) {
-					res.render('resetpw', {
-						login: req.query.login,
-						token: req.query.token
-					})
-				} else {
-					req.flash('danger', "Invalid reset token")
-					res.redirect('/forgotpw')
-				}
+				req.session.token = req.query.token; // <--- NEW LINE
+				res.render('resetpw', {
+					login: req.query.login,
+					token: req.session.token // <--- NEW LINE
+				})
 			} else {
 				req.flash('danger', "Invalid login username")
 				res.redirect('/forgotpw')
@@ -67,7 +63,7 @@ module.exports.resetPw = function (req, res) {
 }
 
 module.exports.resetPwSubmit = function (req, res) {
-	if (req.body.password && req.body.cpassword && req.body.login && req.body.token && /^[a-zA-Z0-9]+$/.test(req.body.login) && /^[a-zA-Z0-9]+$/.test(req.body.token)) {
+	if (req.body.password && req.body.cpassword && req.body.login && req.body.token) {
 		if (req.body.password == req.body.cpassword) {
 			db.User.find({
 				where: {
@@ -94,7 +90,7 @@ module.exports.resetPwSubmit = function (req, res) {
 			req.flash('danger', "Passowords do not match")
 			res.render('resetpw', {
 				login: req.query.login,
-				token: req.query.token
+				token: req.session.token // <--- NEW LINE
 			})
 		}
 
