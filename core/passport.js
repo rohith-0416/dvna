@@ -2,7 +2,6 @@ var db = require('../models')
 var LocalStrategy = require('passport-local').Strategy
 var bCrypt = require('bcrypt')
 
-
 module.exports = function (passport) {
 
     passport.serializeUser(function (user, done) {
@@ -12,7 +11,7 @@ module.exports = function (passport) {
     passport.deserializeUser(function (uid, done) {
         db.User.findOne({
             where: {
-                'id': uid
+                id: { [db.Sequelize.Op.eq]: uid }
             }
         }).then(function (user) {
             if (user) {
@@ -30,7 +29,7 @@ module.exports = function (passport) {
         function (req, username, password, done) {
             db.User.findOne({
                 where: {
-                    'login': username
+                    login: username
                 }
             }).then(function (user) {
                 if (!user) {
@@ -54,7 +53,7 @@ module.exports = function (passport) {
             findOrCreateUser = function () {
                 db.User.findOne({
                     where: {
-                        'email': username
+                        email: username
                     }
                 }).then(function (user) {
                     if (user) {
