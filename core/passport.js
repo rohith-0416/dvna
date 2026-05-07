@@ -2,7 +2,6 @@ var db = require('../models')
 var LocalStrategy = require('passport-local').Strategy
 var bCrypt = require('bcrypt')
 
-
 module.exports = function (passport) {
 
     passport.serializeUser(function (user, done) {
@@ -62,14 +61,18 @@ module.exports = function (passport) {
                     } else {
                         if (req.body.email && req.body.password && req.body.username && req.body.cpassword && req.body.name) {
                             if (req.body.cpassword == req.body.password) {
-                                db.User.create({
-                                    email: req.body.email,
-                                    password: createHash(password),
-                                    name: req.body.name,
-                                    login: username
-                                }).then(function (user) {
-                                    return done(null, user)
-                                })
+                                if (isValidBody(req.body)) {
+                                    db.User.create({
+                                        email: req.body.email,
+                                        password: createHash(password),
+                                        name: req.body.name,
+                                        login: username
+                                    }).then(function (user) {
+                                        return done(null, user)
+                                    })
+                                } else {
+                                    return done(null, false, req.flash('danger', 'Input field(s) missing'));
+                                }
                             } else {
                                 return done(null, false, req.flash('danger', 'Passwords dont match'));
                             }
@@ -86,4 +89,7 @@ module.exports = function (passport) {
         return bCrypt.hashSync(password, bCrypt.genSaltSync(10), null);
     }
 
+    var isValidBody = function (body) {
+        return body.email && body.password && body.username && body.cpassword && body.name;
+    }
 }
