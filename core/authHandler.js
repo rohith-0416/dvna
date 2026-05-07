@@ -20,7 +20,7 @@ module.exports.forgotPw = function (req, res) {
 	if (req.body.login) {
 		db.User.find({
 			where: {
-				'login': req.body.login
+				'login': { [db.Sequelize.Op.eq]: req.body.login }
 			}
 		}).then(user => {
 			if (user) {
@@ -42,7 +42,7 @@ module.exports.resetPw = function (req, res) {
 	if (req.query.login) {
 		db.User.find({
 			where: {
-				'login': req.query.login
+				'login': { [db.Sequelize.Op.eq]: req.query.login }
 			}
 		}).then(user => {
 			if (user) {
@@ -71,7 +71,7 @@ module.exports.resetPwSubmit = function (req, res) {
 		if (req.body.password == req.body.cpassword) {
 			db.User.find({
 				where: {
-					'login': req.body.login
+					'login': { [db.Sequelize.Op.eq]: req.body.login }
 				}
 			}).then(user => {
 				if (user) {
