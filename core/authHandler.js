@@ -3,7 +3,7 @@ var bCrypt = require('bcrypt')
 var md5 = require('md5')
 
 module.exports.isAuthenticated = function (req, res, next) {
-	if (req.user) {
+	if (req.isAuthenticated()) {
 		req.flash('authenticated', true)
 		return next();
 	}
@@ -11,13 +11,13 @@ module.exports.isAuthenticated = function (req, res, next) {
 }
 
 module.exports.isNotAuthenticated = function (req, res, next) {
-	if (!req.user)
+	if (!req.isAuthenticated())
 		return next();
 	res.redirect('/learn');
 }
 
 module.exports.forgotPw = function (req, res) {
-	if (req.body.login) {
+	if (req.body.login && /^[a-zA-Z0-9]+$/.test(req.body.login)) {
 		db.User.find({
 			where: {
 				'login': req.body.login
@@ -39,7 +39,7 @@ module.exports.forgotPw = function (req, res) {
 }
 
 module.exports.resetPw = function (req, res) {
-	if (req.query.login) {
+	if (req.query.login && /^[a-zA-Z0-9]+$/.test(req.query.login)) {
 		db.User.find({
 			where: {
 				'login': req.query.login
@@ -67,7 +67,7 @@ module.exports.resetPw = function (req, res) {
 }
 
 module.exports.resetPwSubmit = function (req, res) {
-	if (req.body.password && req.body.cpassword && req.body.login && req.body.token) {
+	if (req.body.password && req.body.cpassword && req.body.login && req.body.token && /^[a-zA-Z0-9]+$/.test(req.body.login) && /^[a-zA-Z0-9]+$/.test(req.body.token)) {
 		if (req.body.password == req.body.cpassword) {
 			db.User.find({
 				where: {
