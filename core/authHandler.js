@@ -1,6 +1,12 @@
 var db = require('../models')
 var bCrypt = require('bcrypt')
 var md5 = require('md5')
+var express = require('express')
+var app = express()
+
+app.locals.filters = {
+  escape: function (x) { return x; }
+}
 
 module.exports.isAuthenticated = function (req, res, next) {
 	if (req.isAuthenticated()) {
@@ -20,7 +26,7 @@ module.exports.forgotPw = function (req, res) {
 	if (req.body.login) {
 		db.User.find({
 			where: {
-				'login': { [db.Sequelize.Op.eq]: req.body.login }
+				'login': req.body.login
 			}
 		}).then(user => {
 			if (user) {
@@ -42,7 +48,7 @@ module.exports.resetPw = function (req, res) {
 	if (req.query.login) {
 		db.User.find({
 			where: {
-				'login': { [db.Sequelize.Op.eq]: req.query.login }
+				'login': req.query.login
 			}
 		}).then(user => {
 			if (user) {
@@ -71,7 +77,7 @@ module.exports.resetPwSubmit = function (req, res) {
 		if (req.body.password == req.body.cpassword) {
 			db.User.find({
 				where: {
-					'login': { [db.Sequelize.Op.eq]: req.body.login }
+					'login': req.body.login
 				}
 			}).then(user => {
 				if (user) {
