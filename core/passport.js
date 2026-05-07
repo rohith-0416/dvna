@@ -2,7 +2,6 @@ var db = require('../models')
 var LocalStrategy = require('passport-local').Strategy
 var bCrypt = require('bcrypt')
 
-
 module.exports = function (passport) {
 
     passport.serializeUser(function (user, done) {
@@ -52,6 +51,9 @@ module.exports = function (passport) {
         },
         function (req, username, password, done) {
             findOrCreateUser = function () {
+                if (!req.body.email || !req.body.password || !req.body.username || !req.body.cpassword || !req.body.name) {
+                    return done(null, false, req.flash('danger', 'Input field(s) missing'));
+                }
                 db.User.findOne({
                     where: {
                         'email': username
@@ -60,21 +62,17 @@ module.exports = function (passport) {
                     if (user) {
                         return done(null, false, req.flash('danger', 'Account Already Exists'));
                     } else {
-                        if (req.body.email && req.body.password && req.body.username && req.body.cpassword && req.body.name) {
-                            if (req.body.cpassword == req.body.password) {
-                                db.User.create({
-                                    email: req.body.email,
-                                    password: createHash(password),
-                                    name: req.body.name,
-                                    login: username
-                                }).then(function (user) {
-                                    return done(null, user)
-                                })
-                            } else {
-                                return done(null, false, req.flash('danger', 'Passwords dont match'));
-                            }
+                        if (req.body.cpassword == req.body.password) {
+                            db.User.create({
+                                email: req.body.email,
+                                password: createHash(password),
+                                name: req.body.name,
+                                login: username
+                            }).then(function (user) {
+                                return done(null, user)
+                            })
                         } else {
-                            return done(null, false, req.flash('danger', 'Input field(s) missing'));
+                            return done(null, false, req.flash('danger', 'Passwords dont match'));
                         }
                     }
                 });
