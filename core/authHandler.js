@@ -1,15 +1,9 @@
 var db = require('../models')
 var bCrypt = require('bcrypt')
 var md5 = require('md5')
-var express = require('express')
-var app = express()
-
-app.locals.filters = {
-  escape: function (x) { return x; }
-}
 
 module.exports.isAuthenticated = function (req, res, next) {
-	if (req.isAuthenticated()) {
+	if (req.user) {
 		req.flash('authenticated', true)
 		return next();
 	}
@@ -17,7 +11,7 @@ module.exports.isAuthenticated = function (req, res, next) {
 }
 
 module.exports.isNotAuthenticated = function (req, res, next) {
-	if (!req.isAuthenticated())
+	if (!req.user)
 		return next();
 	res.redirect('/learn');
 }
