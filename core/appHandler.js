@@ -1,17 +1,24 @@
-module.exports.calc = function (req, res) {
-	if (req.body.eqn) {
+module.exports.bulkProducts =  function(req, res) {
+	if (req.files.products && req.files.products.mimetype=='text/xml'){
 		try {
-			res.render('app/calc', {
-				output: mathjs.parse(req.body.eqn).toString()
-			})
-		} catch (e) {
-			res.render('app/calc', {
-				output: 'Invalid math string: ' + e.message
-			})
+			var products = libxmljs.parseXmlString(req.files.products.data.toString('utf8'), {noent:true,noblanks:true})
+			if (products.root().childNodes().length === 4) {
+				products.root().childNodes().forEach( product => {
+					var newProduct = new db.Product()
+					newProduct.name = product.childNodes()[0].text()
+					newProduct.code = product.childNodes()[1].text()
+					newProduct.tags = product.childNodes()[2].text()
+					newProduct.description = product.childNodes()[3].text()
+					newProduct.save()
+				})
+				res.redirect('/app/products')
+			} else {
+				res.render('app/bulkproducts',{messages:{danger:'Invalid XML structure'},legacy:false})
+			}
+		} catch (err) {
+			res.render('app/bulkproducts',{messages:{danger:'Invalid XML file'},legacy:false})
 		}
-	} else {
-		res.render('app/calc', {
-			output: 'Enter a valid math string like (3+3)*2'
-		})
+	}else{
+		res.render('app/bulkproducts',{messages:{danger:'Invalid file'},legacy:false})
 	}
 }
