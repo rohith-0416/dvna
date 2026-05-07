@@ -20,7 +20,12 @@ module.exports = function () {
     })
 
     router.get('/bulkproducts', authHandler.isAuthenticated, function (req, res) {
-        res.render('app/bulkproducts',{legacy:req.query.legacy})
+        const allowedLegacyValues = ['value1', 'value2']; // whitelist of allowed values
+        if (allowedLegacyValues.includes(req.query.legacy)) {
+            res.render('app/bulkproducts',{legacy:req.query.legacy})
+        } else {
+            res.status(400).send('Invalid legacy parameter');
+        }
     })
 
     router.get('/products', authHandler.isAuthenticated, appHandler.listProducts)

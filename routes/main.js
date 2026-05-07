@@ -30,7 +30,7 @@ module.exports = function (passport) {
 	})
 
 	router.get('/learn', authHandler.isAuthenticated, function (req, res) {
-		res.render('learn',{vulnerabilities:vulnDict})
+		res.render('learn')
 	})
 
 	router.get('/register', authHandler.isNotAuthenticated, function (req, res) {
