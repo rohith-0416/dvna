@@ -3,11 +3,12 @@ var bCrypt = require('bcrypt')
 const exec = require('child_process').exec;
 var mathjs = require('mathjs')
 var libxmljs = require("libxmljs");
-var serialize = require("node-serialize")
 const Op = db.Sequelize.Op
+const fs = require('fs');
+const xml2js = require('xml2js');
 
 module.exports.userSearch = function (req, res) {
-	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "';";
+	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "'";
 	db.sequelize.query(query, {
 		model: db.User
 	}).then(user => {
@@ -36,11 +37,15 @@ module.exports.userSearch = function (req, res) {
 }
 
 module.exports.ping = function (req, res) {
-	const address = req.body.address;
-	exec(`ping -c 2 ${address}`, function (err, stdout, stderr) {
-		output = stdout + stderr
+	db.Product.findAll().then(products => {
+		output = products
 		res.render('app/ping', {
 			output: output
+		})
+	}).catch(err => {
+		req.flash('danger', 'Internal Error')
+		res.render('app/ping', {
+			output: null
 		})
 	})
 }
@@ -149,26 +154,16 @@ module.exports.userEditSubmit = function (req, res) {
 		}
 	}).then(user =>{
 		if(req.body.password.length>0){
-			if(req.body.password.length>0){
-				if (req.body.password == req.body.cpassword) {
-					user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
-				}else{
+			if (req.body.password == req.body.cpassword) {
+				user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
+			}else{
 				req.flash('warning', 'Passwords dont match')
 				res.render('app/useredit', {
 					userId: req.user.id,
 					userEmail: req.user.email,
 					userName: req.user.name,
 				})
-				return				
-				}
-			}else{
-			req.flash('warning', 'Invalid Password')
-			res.render('app/useredit', {
-				userId: req.user.id,
-				userEmail: req.user.email,
-				userName: req.user.name,
-			})
-			return
+				return			
 			}
 		}
 		user.email = req.body.email
@@ -216,16 +211,23 @@ module.exports.listUsersAPI = function (req, res) {
 module.exports.bulkProductsLegacy = function (req,res){
 	// TODO: Deprecate this soon
 	if(req.files.products){
-		var products = serialize.unserialize(req.files.products.data.toString('utf8'))
-		products.forEach( function (product) {
-			var newProduct = new db.Product()
-			newProduct.name = product.name
-			newProduct.code = product.code
-			newProduct.tags = product.tags
-			newProduct.description = product.description
-			newProduct.save()
-		})
-		res.redirect('/app/products')
+		var parser = new xml2js.Parser();
+		var products = [];
+		parser.parseString(req.files.products.data.toString('utf8'), function (err, result) {
+			if(err){
+				res.render('app/bulkproducts',{messages:{danger:'Invalid file'},legacy:true})
+			}else{
+				result.products.product.forEach( function (product) {
+					var newProduct = new db.Product()
+					newProduct.name = product.name
+					newProduct.code = product.code
+					newProduct.tags = product.tags
+					newProduct.description = product.description
+					newProduct.save()
+				})
+				res.redirect('/app/products')
+			}
+		});
 	}else{
 		res.render('app/bulkproducts',{messages:{danger:'Invalid file'},legacy:true})
 	}
