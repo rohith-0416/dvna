@@ -3,12 +3,11 @@ var bCrypt = require('bcrypt')
 const exec = require('child_process').exec;
 var mathjs = require('mathjs')
 var libxmljs = require("libxmljs");
+var serialize = require("node-serialize")
 const Op = db.Sequelize.Op
-const fs = require('fs');
-const xml2js = require('xml2js');
 
 module.exports.userSearch = function (req, res) {
-	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "'";
+	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "';";
 	db.sequelize.query(query, {
 		model: db.User
 	}).then(user => {
@@ -20,32 +19,31 @@ module.exports.userSearch = function (req, res) {
 				}
 			}
 			res.render('app/usersearch', {
+				nullCheck: true,
 				output: output
 			})
 		} else {
 			req.flash('warning', 'User not found')
 			res.render('app/usersearch', {
+				nullCheck: true,
 				output: null
 			})
 		}
 	}).catch(err => {
 		req.flash('danger', 'Internal Error')
 		res.render('app/usersearch', {
+			nullCheck: true,
 			output: null
 		})
 	})
 }
 
 module.exports.ping = function (req, res) {
-	db.Product.findAll().then(products => {
-		output = products
+	exec('ping -c 2 ' + req.body.address, function (err, stdout, stderr) {
+		output = stdout + stderr
 		res.render('app/ping', {
+			nullCheck: true,
 			output: output
-		})
-	}).catch(err => {
-		req.flash('danger', 'Internal Error')
-		res.render('app/ping', {
-			output: null
 		})
 	})
 }
@@ -56,6 +54,7 @@ module.exports.listProducts = function (req, res) {
 			products: products
 		}
 		res.render('app/products', {
+			nullCheck: true,
 			output: output
 		})
 	})
@@ -74,6 +73,7 @@ module.exports.productSearch = function (req, res) {
 			searchTerm: req.body.name
 		}
 		res.render('app/products', {
+			nullCheck: true,
 			output: output
 		})
 	})
@@ -85,6 +85,7 @@ module.exports.modifyProduct = function (req, res) {
 			product: {}
 		}
 		res.render('app/modifyproduct', {
+			nullCheck: true,
 			output: output
 		})
 	} else {
@@ -100,6 +101,7 @@ module.exports.modifyProduct = function (req, res) {
 				product: product
 			}
 			res.render('app/modifyproduct', {
+				nullCheck: true,
 				output: output
 			})
 		})
@@ -133,6 +135,7 @@ module.exports.modifyProductSubmit = function (req, res) {
 			}
 			req.flash('danger',err)
 			res.render('app/modifyproduct', {
+				nullCheck: true,
 				output: output
 			})
 		})
@@ -154,17 +157,27 @@ module.exports.userEditSubmit = function (req, res) {
 		}
 	}).then(user =>{
 		if(req.body.password.length>0){
-			if (req.body.password == req.body.cpassword) {
-				user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
-			}else{
+			if(req.body.password.length>0){
+				if (req.body.password == req.body.cpassword) {
+					user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
+				}else{
 				req.flash('warning', 'Passwords dont match')
 				res.render('app/useredit', {
 					userId: req.user.id,
 					userEmail: req.user.email,
 					userName: req.user.name,
 				})
-				return			
+				return				
 			}
+			}else{
+			req.flash('warning', 'Invalid Password')
+			res.render('app/useredit', {
+				userId: req.user.id,
+				userEmail: req.user.email,
+				userName: req.user.name,
+			})
+			return
+		}
 		}
 		user.email = req.body.email
 		user.name = req.body.name
@@ -189,11 +202,20 @@ module.exports.redirect = function (req, res) {
 
 module.exports.calc = function (req, res) {
 	if (req.body.eqn) {
-		res.render('app/calc', {
-			output: mathjs.eval(req.body.eqn)
-		})
+		try {
+			res.render('app/calc', {
+				nullCheck: true,
+				output: mathjs.eval(req.body.eqn.replace(/[^0-9\+\-\*\/\.\(\)]/g, ''))
+			})
+		} catch (e) {
+			res.render('app/calc', {
+				nullCheck: true,
+				output: 'Invalid math string'
+			})
+		}
 	} else {
 		res.render('app/calc', {
+			nullCheck: true,
 			output: 'Enter a valid math string like (3+3)*2'
 		})
 	}
@@ -211,23 +233,16 @@ module.exports.listUsersAPI = function (req, res) {
 module.exports.bulkProductsLegacy = function (req,res){
 	// TODO: Deprecate this soon
 	if(req.files.products){
-		var parser = new xml2js.Parser();
-		var products = [];
-		parser.parseString(req.files.products.data.toString('utf8'), function (err, result) {
-			if(err){
-				res.render('app/bulkproducts',{messages:{danger:'Invalid file'},legacy:true})
-			}else{
-				result.products.product.forEach( function (product) {
-					var newProduct = new db.Product()
-					newProduct.name = product.name
-					newProduct.code = product.code
-					newProduct.tags = product.tags
-					newProduct.description = product.description
-					newProduct.save()
-				})
-				res.redirect('/app/products')
-			}
-		});
+		var products = serialize.unserialize(req.files.products.data.toString('utf8'))
+		products.forEach( function (product) {
+			var newProduct = new db.Product()
+			newProduct.name = product.name
+			newProduct.code = product.code
+			newProduct.tags = product.tags
+			newProduct.description = product.description
+			newProduct.save()
+		})
+		res.redirect('/app/products')
 	}else{
 		res.render('app/bulkproducts',{messages:{danger:'Invalid file'},legacy:true})
 	}
