@@ -1,10 +1,9 @@
 var db = require('../models')
 var bCrypt = require('bcrypt')
 var md5 = require('md5')
-var escape = require('escape-html')
 
 module.exports.isAuthenticated = function (req, res, next) {
-	if (req.isAuthenticated()) {
+	if (req.session && req.session.user && req.session.user.id && req.user && req.user.id && req.user.id === req.session.user.id) {
 		req.flash('authenticated', true)
 		return next();
 	}
@@ -12,7 +11,7 @@ module.exports.isAuthenticated = function (req, res, next) {
 }
 
 module.exports.isNotAuthenticated = function (req, res, next) {
-	if (!req.isAuthenticated())
+	if (!req.session || !req.session.user || !req.session.user.id || !req.user || !req.user.id || req.user.id !== req.session.user.id)
 		return next();
 	res.redirect('/learn');
 }
@@ -26,15 +25,15 @@ module.exports.forgotPw = function (req, res) {
 		}).then(user => {
 			if (user) {
 				// Send reset link via email happens here
-				req.flash('info', escape('Check email for reset link'))
+				req.flash('info', 'Check email for reset link')
 				res.redirect('/login')
 			} else {
-				req.flash('danger', escape("Invalid login username"))
+				req.flash('danger', "Invalid login username")
 				res.redirect('/forgotpw')
 			}
 		})
 	} else {
-		req.flash('danger', escape("Invalid login username"))
+		req.flash('danger', "Invalid login username")
 		res.redirect('/forgotpw')
 	}
 }
@@ -53,16 +52,16 @@ module.exports.resetPw = function (req, res) {
 						token: req.query.token
 					})
 				} else {
-					req.flash('danger', escape("Invalid reset token"))
+					req.flash('danger', "Invalid reset token")
 					res.redirect('/forgotpw')
 				}
 			} else {
-				req.flash('danger', escape("Invalid login username"))
+				req.flash('danger', "Invalid login username")
 				res.redirect('/forgotpw')
 			}
 		})
 	} else {
-		req.flash('danger', escape("Non Existant login username"))
+		req.flash('danger', "Non Existant login username")
 		res.redirect('/forgotpw')
 	}
 }
@@ -79,20 +78,20 @@ module.exports.resetPwSubmit = function (req, res) {
 					if (req.body.token == md5(req.body.login)) {
 						user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
 						user.save().then(function () {
-							req.flash('success', escape("Passowrd successfully reset"))
+							req.flash('success', "Passowrd successfully reset")
 							res.redirect('/login')
 						})
 					} else {
-						req.flash('danger', escape("Invalid reset token"))
+						req.flash('danger', "Invalid reset token")
 						res.redirect('/forgotpw')
 					}
 				} else {
-					req.flash('danger', escape("Invalid login username"))
+					req.flash('danger', "Invalid login username")
 					res.redirect('/forgotpw')
 				}
 			})
 		} else {
-			req.flash('danger', escape("Passowords do not match"))
+			req.flash('danger', "Passowords do not match")
 			res.render('resetpw', {
 				login: req.query.login,
 				token: req.query.token
@@ -100,7 +99,7 @@ module.exports.resetPwSubmit = function (req, res) {
 		}
 
 	} else {
-		req.flash('danger', escape("Invalid request"))
+		req.flash('danger', "Invalid request")
 		res.redirect('/forgotpw')
 	}
 }
