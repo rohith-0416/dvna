@@ -1,6 +1,7 @@
 var router = require('express').Router()
 var vulnDict = require('../config/vulns')
 var authHandler = require('../core/authHandler')
+var path = require('path')
 
 module.exports = function (passport) {
 	router.get('/', authHandler.isAuthenticated, function (req, res) {
@@ -12,6 +13,11 @@ module.exports = function (passport) {
 	})
 
 	router.get('/learn/vulnerability/:vuln', authHandler.isAuthenticated, function (req, res) {
+		var allowedChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
+		if (!/^[a-zA-Z0-9_]+$/.test(req.params.vuln)) {
+			res.status(400).send('Invalid vulnerability name');
+			return;
+		}
 		res.render('vulnerabilities/layout', {
 			vuln: req.params.vuln,
 			vuln_title: vulnDict[req.params.vuln],
