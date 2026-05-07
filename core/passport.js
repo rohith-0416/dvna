@@ -2,6 +2,7 @@ var db = require('../models')
 var LocalStrategy = require('passport-local').Strategy
 var bCrypt = require('bcrypt')
 
+
 module.exports = function (passport) {
 
     passport.serializeUser(function (user, done) {
@@ -53,9 +54,7 @@ module.exports = function (passport) {
             findOrCreateUser = function () {
                 db.User.findOne({
                     where: {
-                        'email': {
-                            $eq: req.body.email
-                        }
+                        'email': username
                     }
                 }).then(function (user) {
                     if (user) {
