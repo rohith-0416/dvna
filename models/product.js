@@ -21,7 +21,10 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false
         },
         tags: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            validate: {
+                is: /^[a-zA-Z0-9\s,]+$/ // allow only alphanumeric characters, spaces, and commas
+            }
         }
     });
     return Product;
