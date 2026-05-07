@@ -21,10 +21,10 @@ app.use(fileUpload());
 
 // Intialize Session
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: 'keyboard cat',
   resave: true,
   saveUninitialized: true,
-  cookie: { secure: false }
+  cookie: { secure: true }
 }))
 
 // Initialize Passport
