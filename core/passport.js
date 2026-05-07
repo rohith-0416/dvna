@@ -11,7 +11,7 @@ module.exports = function (passport) {
     passport.deserializeUser(function (uid, done) {
         db.User.findOne({
             where: {
-                id: { [db.Sequelize.Op.eq]: uid }
+                'id': uid
             }
         }).then(function (user) {
             if (user) {
@@ -29,7 +29,7 @@ module.exports = function (passport) {
         function (req, username, password, done) {
             db.User.findOne({
                 where: {
-                    login: username
+                    'login': username
                 }
             }).then(function (user) {
                 if (!user) {
@@ -51,29 +51,28 @@ module.exports = function (passport) {
         },
         function (req, username, password, done) {
             findOrCreateUser = function () {
+                if (!req.body.email || !req.body.password || !req.body.username || !req.body.cpassword || !req.body.name) {
+                    return done(null, false, req.flash('danger', 'Input field(s) missing'));
+                }
                 db.User.findOne({
                     where: {
-                        email: username
+                        'email': username
                     }
                 }).then(function (user) {
                     if (user) {
                         return done(null, false, req.flash('danger', 'Account Already Exists'));
                     } else {
-                        if (req.body.email && req.body.password && req.body.username && req.body.cpassword && req.body.name) {
-                            if (req.body.cpassword == req.body.password) {
-                                db.User.create({
-                                    email: req.body.email,
-                                    password: createHash(password),
-                                    name: req.body.name,
-                                    login: username
-                                }).then(function (user) {
-                                    return done(null, user)
-                                })
-                            } else {
-                                return done(null, false, req.flash('danger', 'Passwords dont match'));
-                            }
+                        if (req.body.cpassword == req.body.password) {
+                            db.User.create({
+                                email: req.body.email,
+                                password: createHash(password),
+                                name: req.body.name,
+                                login: username
+                            }).then(function (user) {
+                                return done(null, user)
+                            })
                         } else {
-                            return done(null, false, req.flash('danger', 'Input field(s) missing'));
+                            return done(null, false, req.flash('danger', 'Passwords dont match'));
                         }
                     }
                 });
