@@ -18,9 +18,9 @@ module.exports.isNotAuthenticated = function (req, res, next) {
 
 module.exports.forgotPw = function (req, res) {
 	if (req.body.login) {
-		db.User.find({
+		db.User.findOne({
 			where: {
-				'login': req.body.login
+				login: req.body.login
 			}
 		}).then(user => {
 			if (user) {
@@ -40,9 +40,9 @@ module.exports.forgotPw = function (req, res) {
 
 module.exports.resetPw = function (req, res) {
 	if (req.query.login) {
-		db.User.find({
+		db.User.findOne({
 			where: {
-				'login': req.query.login
+				login: req.query.login
 			}
 		}).then(user => {
 			if (user) {
@@ -69,9 +69,9 @@ module.exports.resetPw = function (req, res) {
 module.exports.resetPwSubmit = function (req, res) {
 	if (req.body.password && req.body.cpassword && req.body.login && req.body.token) {
 		if (req.body.password == req.body.cpassword) {
-			db.User.find({
+			db.User.findOne({
 				where: {
-					'login': req.body.login
+					login: req.body.login
 				}
 			}).then(user => {
 				if (user) {
