@@ -2,7 +2,6 @@ var db = require('../models')
 var LocalStrategy = require('passport-local').Strategy
 var bCrypt = require('bcrypt')
 
-
 module.exports = function (passport) {
 
     passport.serializeUser(function (user, done) {
@@ -30,7 +29,7 @@ module.exports = function (passport) {
         function (req, username, password, done) {
             db.User.findOne({
                 where: {
-                    'login': username
+                    'login': db.sequelize.escape(username)
                 }
             }).then(function (user) {
                 if (!user) {
