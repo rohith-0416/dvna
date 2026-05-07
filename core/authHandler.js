@@ -46,15 +46,11 @@ module.exports.resetPw = function (req, res) {
 			}
 		}).then(user => {
 			if (user) {
-				if (req.query.token == md5(req.query.login)) {
-					res.render('resetpw', {
-						login: req.query.login,
-						token: req.query.token
-					})
-				} else {
-					req.flash('danger', "Invalid reset token")
-					res.redirect('/forgotpw')
-				}
+				req.session.token = req.query.token; // <--- NEW LINE
+				res.render('resetpw', {
+					login: req.query.login,
+					token: req.session.token // <--- NEW LINE
+				})
 			} else {
 				req.flash('danger', "Invalid login username")
 				res.redirect('/forgotpw')
@@ -94,7 +90,7 @@ module.exports.resetPwSubmit = function (req, res) {
 			req.flash('danger', "Passowords do not match")
 			res.render('resetpw', {
 				login: req.query.login,
-				token: req.query.token
+				token: req.session.token // <--- NEW LINE
 			})
 		}
 
