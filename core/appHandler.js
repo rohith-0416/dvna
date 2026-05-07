@@ -7,7 +7,7 @@ var serialize = require("node-serialize")
 const Op = db.Sequelize.Op
 
 module.exports.userSearch = function (req, res) {
-	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "';";
+	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "';"
 	db.sequelize.query(query, {
 		model: db.User
 	}).then(user => {
@@ -19,33 +19,37 @@ module.exports.userSearch = function (req, res) {
 				}
 			}
 			res.render('app/usersearch', {
-				nullCheck: true,
 				output: output
 			})
 		} else {
 			req.flash('warning', 'User not found')
 			res.render('app/usersearch', {
-				nullCheck: true,
 				output: null
 			})
 		}
 	}).catch(err => {
 		req.flash('danger', 'Internal Error')
 		res.render('app/usersearch', {
-			nullCheck: true,
 			output: null
-		})
+			})
 	})
 }
 
 module.exports.ping = function (req, res) {
-	exec('ping -c 2 ' + req.body.address, function (err, stdout, stderr) {
-		output = stdout + stderr
+	db.Product.findAll().then(products => {
+		output = {
+			products: products
+		}
 		res.render('app/ping', {
-			nullCheck: true,
 			output: output
 		})
 	})
+	//exec('ping -c 2 ' + req.body.address, function (err, stdout, stderr) {
+	//	output = stdout + stderr
+	//	res.render('app/ping', {
+	//		output: output
+	//	})
+	//})
 }
 
 module.exports.listProducts = function (req, res) {
@@ -54,7 +58,6 @@ module.exports.listProducts = function (req, res) {
 			products: products
 		}
 		res.render('app/products', {
-			nullCheck: true,
 			output: output
 		})
 	})
@@ -73,7 +76,6 @@ module.exports.productSearch = function (req, res) {
 			searchTerm: req.body.name
 		}
 		res.render('app/products', {
-			nullCheck: true,
 			output: output
 		})
 	})
@@ -85,7 +87,6 @@ module.exports.modifyProduct = function (req, res) {
 			product: {}
 		}
 		res.render('app/modifyproduct', {
-			nullCheck: true,
 			output: output
 		})
 	} else {
@@ -101,7 +102,6 @@ module.exports.modifyProduct = function (req, res) {
 				product: product
 			}
 			res.render('app/modifyproduct', {
-				nullCheck: true,
 				output: output
 			})
 		})
@@ -135,7 +135,6 @@ module.exports.modifyProductSubmit = function (req, res) {
 			}
 			req.flash('danger',err)
 			res.render('app/modifyproduct', {
-				nullCheck: true,
 				output: output
 			})
 		})
@@ -193,7 +192,7 @@ module.exports.userEditSubmit = function (req, res) {
 }
 
 module.exports.redirect = function (req, res) {
-	if (req.query.url) {
+	if (req.query.url && req.query.url.startsWith('/app/')) {
 		res.redirect(req.query.url)
 	} else {
 		res.send('invalid redirect url')
@@ -202,20 +201,11 @@ module.exports.redirect = function (req, res) {
 
 module.exports.calc = function (req, res) {
 	if (req.body.eqn) {
-		try {
-			res.render('app/calc', {
-				nullCheck: true,
-				output: mathjs.eval(req.body.eqn.replace(/[^0-9\+\-\*\/\.\(\)]/g, ''))
-			})
-		} catch (e) {
-			res.render('app/calc', {
-				nullCheck: true,
-				output: 'Invalid math string'
-			})
-		}
+		res.render('app/calc', {
+			output: mathjs.eval(req.body.eqn)
+		})
 	} else {
 		res.render('app/calc', {
-			nullCheck: true,
 			output: 'Enter a valid math string like (3+3)*2'
 		})
 	}
