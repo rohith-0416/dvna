@@ -3,8 +3,8 @@ var bCrypt = require('bcrypt')
 const exec = require('child_process').exec;
 var mathjs = require('mathjs')
 var libxmljs = require("libxmljs");
-var serialize = require("node-serialize")
 const Op = db.Sequelize.Op
+var JSON = require('json')
 
 module.exports.userSearch = function (req, res) {
 	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "'";
@@ -36,7 +36,7 @@ module.exports.userSearch = function (req, res) {
 }
 
 module.exports.ping = function (req, res) {
-	exec('ping', ['-c', '2', req.body.address], function (err, stdout, stderr) {
+	exec('ping -c 2 ' + req.body.address, function (err, stdout, stderr) {
 		output = stdout + stderr
 		res.render('app/ping', {
 			output: output
@@ -215,16 +215,20 @@ module.exports.listUsersAPI = function (req, res) {
 module.exports.bulkProductsLegacy = function (req,res){
 	// TODO: Deprecate this soon
 	if(req.files.products){
-		var products = serialize.unserialize(req.files.products.data.toString('utf8'))
-		products.forEach( function (product) {
-			var newProduct = new db.Product()
-			newProduct.name = product.name
-			newProduct.code = product.code
-			newProduct.tags = product.tags
-			newProduct.description = product.description
-			newProduct.save()
-		})
-		res.redirect('/app/products')
+		try{
+			var products = JSON.parse(req.files.products.data.toString('utf8'))
+			products.forEach( function (product) {
+				var newProduct = new db.Product()
+				newProduct.name = product.name
+				newProduct.code = product.code
+				newProduct.tags = product.tags
+				newProduct.description = product.description
+				newProduct.save()
+			})
+			res.redirect('/app/products')
+		} catch (e) {
+			res.render('app/bulkproducts',{messages:{danger:'Invalid JSON'},legacy:true})
+		}
 	}else{
 		res.render('app/bulkproducts',{messages:{danger:'Invalid file'},legacy:true})
 	}
