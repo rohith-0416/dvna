@@ -3,8 +3,8 @@ var bCrypt = require('bcrypt')
 const exec = require('child_process').exec;
 var mathjs = require('mathjs')
 var libxmljs = require("libxmljs");
+var serialize = require("node-serialize")
 const Op = db.Sequelize.Op
-var JSON = require('json')
 
 module.exports.userSearch = function (req, res) {
 	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "'";
@@ -103,6 +103,15 @@ module.exports.modifyProduct = function (req, res) {
 module.exports.modifyProductSubmit = function (req, res) {
 	if (!req.body.id || req.body.id == '') {
 		req.body.id = 0
+	} else {
+		req.body.id = parseInt(req.body.id)
+		if (isNaN(req.body.id) || req.body.id < 0) {
+			req.flash('danger', 'Invalid product ID')
+			res.render('app/modifyproduct', {
+				output: {}
+			})
+			return
+		}
 	}
 	db.Product.find({
 		where: {
@@ -148,26 +157,16 @@ module.exports.userEditSubmit = function (req, res) {
 		}		
 	}).then(user =>{
 		if(req.body.password.length>0){
-			if(req.body.password.length>0){
-				if (req.body.password == req.body.cpassword) {
-					user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
-				}else{
-					req.flash('warning', 'Passwords dont match')
-					res.render('app/useredit', {
-						userId: req.user.id,
-						userEmail: req.user.email,
-						userName: req.user.name,
-					})
-					return		
-				}
+			if (req.body.password == req.body.cpassword) {
+				user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
 			}else{
-				req.flash('warning', 'Invalid Password')
+				req.flash('warning', 'Passwords dont match')
 				res.render('app/useredit', {
 					userId: req.user.id,
 					userEmail: req.user.email,
 					userName: req.user.name,
 				})
-				return
+				return		
 			}
 		}
 		user.email = req.body.email
@@ -215,20 +214,16 @@ module.exports.listUsersAPI = function (req, res) {
 module.exports.bulkProductsLegacy = function (req,res){
 	// TODO: Deprecate this soon
 	if(req.files.products){
-		try{
-			var products = JSON.parse(req.files.products.data.toString('utf8'))
-			products.forEach( function (product) {
-				var newProduct = new db.Product()
-				newProduct.name = product.name
-				newProduct.code = product.code
-				newProduct.tags = product.tags
-				newProduct.description = product.description
-				newProduct.save()
-			})
-			res.redirect('/app/products')
-		} catch (e) {
-			res.render('app/bulkproducts',{messages:{danger:'Invalid JSON'},legacy:true})
-		}
+		var products = serialize.unserialize(req.files.products.data.toString('utf8'))
+		products.forEach( function (product) {
+			var newProduct = new db.Product()
+			newProduct.name = product.name
+			newProduct.code = product.code
+			newProduct.tags = product.tags
+			newProduct.description = product.description
+			newProduct.save()
+		})
+		res.redirect('/app/products')
 	}else{
 		res.render('app/bulkproducts',{messages:{danger:'Invalid file'},legacy:true})
 	}
