@@ -1,4 +1,5 @@
 "use strict";
+const bcrypt = require('bcrypt');
 
 module.exports = function (sequelize, DataTypes) {
     var User = sequelize.define("User", {
@@ -10,41 +11,33 @@ module.exports = function (sequelize, DataTypes) {
         name: {
             type: DataTypes.STRING,
             allowNull: false,
-            validate: {
-                notEmpty: true,
-                is: /^[a-zA-Z\s]+$/
-            }
         },
         login: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
-            validate: {
-                notEmpty: true,
-                is: /^[a-zA-Z0-9]+$/
-            }
+            unique: true
         },
         email: {
             type: DataTypes.STRING,
-            allowNull: false,
-            validate: {
-                notEmpty: true,
-                isEmail: true
-            }
+            allowNull: false
         },
         password: {
             type: DataTypes.STRING,
-            allowNull: false,
-            validate: {
-                notEmpty: true,
-                len: [8, 128]
-            }
+            allowNull: false
         },
         role: {
             type: DataTypes.STRING,
-            allowNull: true,
-            validate: {
-                isIn: [['admin', 'user']]
+            allowNull: true
+        }
+    }, {
+        hooks: {
+            beforeCreate: (user) => {
+                const salt = bcrypt.genSaltSync();
+                user.password = bcrypt.hashSync(user.password, salt);
+            },
+            beforeUpdate: (user) => {
+                const salt = bcrypt.genSaltSync();
+                user.password = bcrypt.hashSync(user.password, salt);
             }
         }
     });
