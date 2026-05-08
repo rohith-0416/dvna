@@ -30,7 +30,7 @@ module.exports = function (passport) {
         function (req, username, password, done) {
             db.User.findOne({
                 where: {
-                    'login': {[db.Sequelize.Op.eq]: username}
+                    'login': username
                 }
             }).then(function (user) {
                 if (!user) {
@@ -54,7 +54,7 @@ module.exports = function (passport) {
             findOrCreateUser = function () {
                 db.User.findOne({
                     where: {
-                        'email': {[db.Sequelize.Op.eq]: username}
+                        'email': username
                     }
                 }).then(function (user) {
                     if (user) {
@@ -83,7 +83,7 @@ module.exports = function (passport) {
         }));
 
     var createHash = function (password) {
-        return bCrypt.hashSync(password, bCrypt.genSaltSync(10), null);
+        return bCrypt.hashSync(password, bCrypt.genSaltSync(), null);
     }
 
 }
