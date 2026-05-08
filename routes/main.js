@@ -12,6 +12,10 @@ module.exports = function (passport) {
 	})
 
 	router.get('/learn/vulnerability/:vuln', authHandler.isAuthenticated, function (req, res) {
+		if (!vulnDict[req.params.vuln]) {
+			res.status(404).send('404')
+			return
+		}
 		res.render('vulnerabilities/layout', {
 			vuln: req.params.vuln,
 			vuln_title: vulnDict[req.params.vuln],
