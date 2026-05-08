@@ -30,7 +30,7 @@ module.exports = function (passport) {
         function (req, username, password, done) {
             db.User.findOne({
                 where: {
-                    'login': username
+                    'login': {[db.Sequelize.Op.eq]: username}
                 }
             }).then(function (user) {
                 if (!user) {
@@ -54,7 +54,7 @@ module.exports = function (passport) {
             findOrCreateUser = function () {
                 db.User.findOne({
                     where: {
-                        'email': username
+                        'email': {[db.Sequelize.Op.eq]: username}
                     }
                 }).then(function (user) {
                     if (user) {
