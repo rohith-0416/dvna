@@ -10,18 +10,30 @@ module.exports = function (sequelize, DataTypes) {
         code: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true
+            unique: true,
+            validate: {
+                is: /^[a-zA-Z0-9_-]+$/
+            }
         },
         name: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: false,
+            validate: {
+                is: /^[a-zA-Z0-9_-]+$/
+            }
         },
         description: {
             type: DataTypes.TEXT,
-            allowNull: false
+            allowNull: false,
+            validate: {
+                is: /^[a-zA-Z0-9_-\s.,!?]+$/
+            }
         },
         tags: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            validate: {
+                is: /^[a-zA-Z0-9_-]+$/
+            }
         }
     });
     return Product;

@@ -40,8 +40,12 @@ fs
     return (file.indexOf(".") !== 0) && (file !== "index.js");
   })
   .forEach(function (file) {
-    var model = sequelize.import(path.join(__dirname, file));
-    db[model.name] = model;
+    var filePath = path.join(__dirname, file);
+    var fileName = path.basename(file);
+    if (filePath.indexOf(__dirname) === 0 && fileName === file) {
+      var model = sequelize.import(filePath);
+      db[model.name] = model;
+    }
   });
 
 Object.keys(db).forEach(function (modelName) {

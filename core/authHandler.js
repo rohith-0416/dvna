@@ -76,7 +76,7 @@ module.exports.resetPwSubmit = function (req, res) {
 			}).then(user => {
 				if (user) {
 					if (req.body.token == md5(req.body.login)) {
-						user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
+						user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(), null)
 						user.save().then(function () {
 							req.flash('success', "Passowrd successfully reset")
 							res.redirect('/login')
