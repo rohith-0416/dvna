@@ -14,7 +14,15 @@ app.use(express.static('public'))
 app.set('view engine','ejs')
 app.use(morgan('tiny'))
 app.use(bodyParser.urlencoded({ extended: false }))
-app.use(fileUpload());
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+  filter: function(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF)$/)) {
+      return cb(new Error('Only image files are allowed!'));
+    }
+    cb(undefined, true);
+  }
+}));
 
 // Enable for Reverse proxy support
 // app.set('trust proxy', 1) 
@@ -24,7 +32,7 @@ app.use(session({
   secret: 'keyboard cat',
   resave: true,
   saveUninitialized: true,
-  cookie: { secure: true }
+  cookie: { secure: false }
 }))
 
 // Initialize Passport
