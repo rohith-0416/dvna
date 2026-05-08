@@ -1,6 +1,6 @@
 var db = require('../models')
 var bCrypt = require('bcrypt')
-var crypto = require('crypto')
+var md5 = require('md5')
 
 module.exports.isAuthenticated = function (req, res, next) {
 	if (req.isAuthenticated()) {
@@ -17,20 +17,16 @@ module.exports.isNotAuthenticated = function (req, res, next) {
 }
 
 module.exports.forgotPw = function (req, res) {
-	if (req.body.login) {
+	if (req.body.login && /^[a-zA-Z0-9]+$/.test(req.body.login)) {
 		db.User.find({
 			where: {
 				'login': req.body.login
 			}
 		}).then(user => {
 			if (user) {
-				var token = crypto.randomBytes(32).toString('hex');
-				user.resetToken = token;
-				user.save().then(function () {
-					// Send reset link via email happens here
-					req.flash('info', 'Check email for reset link')
-					res.redirect('/login')
-				})
+				// Send reset link via email happens here
+				req.flash('info', 'Check email for reset link')
+				res.redirect('/login')
 			} else {
 				req.flash('danger', "Invalid login username")
 				res.redirect('/forgotpw')
@@ -43,14 +39,14 @@ module.exports.forgotPw = function (req, res) {
 }
 
 module.exports.resetPw = function (req, res) {
-	if (req.query.login) {
+	if (req.query.login && /^[a-zA-Z0-9]+$/.test(req.query.login)) {
 		db.User.find({
 			where: {
 				'login': req.query.login
 			}
 		}).then(user => {
 			if (user) {
-				if (req.query.token == user.resetToken) {
+				if (req.query.token == md5(req.query.login)) {
 					res.render('resetpw', {
 						login: req.query.login,
 						token: req.query.token
@@ -71,7 +67,7 @@ module.exports.resetPw = function (req, res) {
 }
 
 module.exports.resetPwSubmit = function (req, res) {
-	if (req.body.password && req.body.cpassword && req.body.login && req.body.token) {
+	if (req.body.password && req.body.cpassword && req.body.login && req.body.token && /^[a-zA-Z0-9]+$/.test(req.body.login)) {
 		if (req.body.password == req.body.cpassword) {
 			db.User.find({
 				where: {
@@ -79,9 +75,8 @@ module.exports.resetPwSubmit = function (req, res) {
 				}
 			}).then(user => {
 				if (user) {
-					if (req.body.token == user.resetToken) {
+					if (req.body.token == md5(req.body.login)) {
 						user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
-						user.resetToken = null;
 						user.save().then(function () {
 							req.flash('success', "Passowrd successfully reset")
 							res.redirect('/login')
