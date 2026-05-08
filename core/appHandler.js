@@ -103,15 +103,6 @@ module.exports.modifyProduct = function (req, res) {
 module.exports.modifyProductSubmit = function (req, res) {
 	if (!req.body.id || req.body.id == '') {
 		req.body.id = 0
-	} else {
-		req.body.id = parseInt(req.body.id)
-		if (isNaN(req.body.id) || req.body.id < 0) {
-			req.flash('danger', 'Invalid product ID')
-			res.render('app/modifyproduct', {
-				output: {}
-			})
-			return
-		}
 	}
 	db.Product.find({
 		where: {
@@ -157,16 +148,26 @@ module.exports.userEditSubmit = function (req, res) {
 		}		
 	}).then(user =>{
 		if(req.body.password.length>0){
-			if (req.body.password == req.body.cpassword) {
-				user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
+			if(req.body.password.length>0){
+				if (req.body.password == req.body.cpassword) {
+					user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(12), null)
+				}else{
+					req.flash('warning', 'Passwords dont match')
+					res.render('app/useredit', {
+						userId: req.user.id,
+						userEmail: req.user.email,
+						userName: req.user.name,
+					})
+					return		
+				}
 			}else{
-				req.flash('warning', 'Passwords dont match')
+				req.flash('warning', 'Invalid Password')
 				res.render('app/useredit', {
 					userId: req.user.id,
 					userEmail: req.user.email,
 					userName: req.user.name,
 				})
-				return		
+				return
 			}
 		}
 		user.email = req.body.email
