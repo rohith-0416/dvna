@@ -36,15 +36,26 @@ module.exports = function (passport) {
                 if (!user) {
                     return done(null, false, req.flash('danger', 'Invalid Credentials'))
                 }
-                if (!isValidPassword(user, password)) {
-                    return done(null, false, req.flash('danger', 'Invalid Credentials'))
-                }
-                return done(null, user);
+                isValidPassword(user, password, function (err, isValid) {
+                    if (err) {
+                        return done(err);
+                    }
+                    if (!isValid) {
+                        return done(null, false, req.flash('danger', 'Invalid Credentials'))
+                    }
+                    return done(null, user);
+                });
             });
         }))
 
-    var isValidPassword = function (user, password) {
-        return bCrypt.compareSync(password, user.password);
+    var isValidPassword = function (user, password, callback) {
+        bCrypt.compare(password, user.password, function (err, res) {
+            if (err) {
+                callback(err);
+            } else {
+                callback(null, res);
+            }
+        });
     }
 
     passport.use('signup', new LocalStrategy({
@@ -83,7 +94,7 @@ module.exports = function (passport) {
         }));
 
     var createHash = function (password) {
-        return bCrypt.hashSync(password, bCrypt.genSaltSync(), null);
+        return bCrypt.hashSync(password, bCrypt.genSaltSync(10), null);
     }
 
 }
